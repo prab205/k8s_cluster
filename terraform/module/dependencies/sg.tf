@@ -15,7 +15,7 @@ resource "aws_security_group" "collective_sg" {
   }
 
   ingress {
-    description = "HTTP from anywhere"
+    description = "TCP requests from anywhere"
     from_port   = 30000
     to_port     = 32767
     protocol    = "tcp"
@@ -23,7 +23,7 @@ resource "aws_security_group" "collective_sg" {
   }
 
   ingress {
-    description = "HTTP from anywhere"
+    description = "UDP requests from anywhere"
     from_port   = 30000
     to_port     = 32767
     protocol    = "udp"

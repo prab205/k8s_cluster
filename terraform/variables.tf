@@ -25,13 +25,13 @@ variable "instance_type" {
 variable "ssh_public_key_path" {
   description = "Path to your public key file"
   type        = string
-  default     = "~/.ssh/id_rsa.pub"
+  default     = "~/.ssh/id_rsa_k8.pub"
 }
 
 variable "ssh_private_key_path" {
   description = "Path to your private key file"
   type        = string
-  default     = "~/.ssh/id_rsa"
+  default     = "~/.ssh/id_rsa_k8"
 }
 
 variable "ansible_directory" {
