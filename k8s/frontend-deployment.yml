@@ -15,6 +15,7 @@ spec:
       containers:
       - name: frontend-pod
         image: prab205/3-tier-frontend-amd
+        imagePullPolicy: "Always"
         resources:
           requests:
             memory: "128Mi"
