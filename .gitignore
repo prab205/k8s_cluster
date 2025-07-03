@@ -1,0 +1,8 @@
+.terraform*
+terraform.tfstate*
+variables.auto.tfvars.json
+ansible/inventory
+kind.yml
+.DS_Store
+.env
+node_modules

@@ -1,0 +1,95 @@
+---
+- name: Configuration of master node
+  hosts: master
+  gather_facts: no
+  become: true
+  vars:
+    pod_cidr: "192.168.0.0/16"
+    default_user: ubuntu
+
+  tasks:
+    - name: Wait for user-data to complete
+      command: cloud-init status --wait
+      changed_when: false
+      
+    - name: Initialize Kubernetes cluster
+      become: true
+      shell: |
+        kubeadm init \
+        --control-plane-endpoint=$(curl -s ifconfig.me) \
+        --apiserver-cert-extra-sans=$(curl -s ifconfig.me) \
+        --pod-network-cidr="{{ pod_cidr }}" \
+        --node-name=$(hostname -s) \
+        --ignore-preflight-errors Swap 
+      args:
+        creates: /etc/kubernetes/kubelet.conf 
+
+    - name: Extract kubeadm join command
+      shell: "kubeadm token create --print-join-command"
+      register: join_command
+
+    - name: Persist join command
+      add_host:
+        name: cluster 
+        join: "{{ join_command.stdout }}"
+
+    - name: Create .kube directory
+      file:
+        path: "/home/{{ default_user }}/.kube"
+        state: directory
+        mode: '0775'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Copy Kubernetes admin.conf to user kube config
+      become: true
+      copy:
+        src: "/etc/kubernetes/admin.conf"
+        dest: "/home/{{ default_user }}/.kube/config"
+        owner: "{{ default_user }}"
+        group: "{{ default_user }}"
+        mode: '0600'
+        force: false
+        remote_src: true
+
+    - name: Check if /tmp/kube-flannel.yml already exists
+      stat:
+        path: /tmp/kube-flannel.yml
+      register: flannel_file
+      changed_when: false
+
+    - name: Download kube-flannel.yml to /tmp
+      get_url:
+        url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+        dest: /tmp/kube-flannel.yml
+      when: not flannel_file.stat.exists
+
+    - name: Replace pod network CIDR in kube-flannel.yml
+      replace:
+        path: /tmp/kube-flannel.yml
+        regexp: '"Network":\s*"10\.244\.0\.0/16"'
+        replace: '"Network": "{{ pod_cidr }}"'
+      when: not flannel_file.stat.exists
+
+    - name: Apply Flannel manifest
+      command: "kubectl apply -f /tmp/kube-flannel.yml --kubeconfig /home/{{ default_user }}/.kube/config"
+      when: not flannel_file.stat.exists
+
+
+
+
+- name: Configuration of worker node
+  hosts: worker
+  gather_facts: no
+  become: true
+  tasks:
+    - name: Wait for cloud-init / user-data to finish
+      command: cloud-init status --wait
+      changed_when: false
+
+    - name: Join the cluster
+      become: true
+      shell: "{{ hostvars.cluster.join }} --ignore-preflight-errors=Swap"
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+      when: hostvars.cluster.join is defined
