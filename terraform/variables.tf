@@ -25,17 +25,17 @@ variable "instance_type" {
 variable "ssh_public_key_path" {
   description = "Path to your public key file"
   type        = string
-  default     = "~/.ssh/id_rsa_k8.pub"
+  default     = "~/.ssh/id_rsa.pub"
 }
 
 variable "ssh_private_key_path" {
   description = "Path to your private key file"
   type        = string
-  default     = "~/.ssh/id_rsa_k8"
+  default     = "~/.ssh/id_rsa"
 }
 
 variable "ansible_directory" {
   description = "Location of ansible inventory file to generate"
   type        = string
-  default     = "./resources/ansible"
+  default     = "../ansible"
 }

@@ -3,6 +3,7 @@
     "ami_id"            : "",
     "no_of_nodes"       : "1",
     "instance_type"     : "t2.medium",
-    "key_name"          : "k8s",
+    "ssh_public_key_path": "",
+    "ssh_private_key_path": "",
     "ansible_directory" : "../ansible"
 }
